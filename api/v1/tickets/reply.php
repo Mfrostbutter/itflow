@@ -12,9 +12,9 @@ require_once '../require_post_method.php';
 // Parse Info
 $ticket_id = intval($_POST['ticket_id']);
 
-// Reply body
+// Reply body - SQL escaped only, not sanitized, as replies hold HTML (see agent/post/ticket.php)
 if (isset($_POST['ticket_reply'])) {
-    $ticket_reply = escapeSql($_POST['ticket_reply']);
+    $ticket_reply = mysqli_escape_string($mysqli, $_POST['ticket_reply']);
 } else {
     $ticket_reply = '';
 }
