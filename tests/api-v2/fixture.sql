@@ -4,6 +4,8 @@
 DELETE FROM api_keys WHERE api_key_name LIKE 'ci-%';
 DELETE FROM tickets WHERE ticket_id BETWEEN 9101 AND 9199;
 DELETE FROM users WHERE user_id = 901;
+DELETE FROM contacts WHERE contact_id IN (801, 802);
+DELETE FROM assets WHERE asset_id IN (701, 702);
 DELETE FROM clients WHERE client_id IN (101, 102);
 
 INSERT INTO api_keys (api_key_name, api_key_secret, api_key_decrypt_hash, api_key_expire, api_key_client_id) VALUES
@@ -17,6 +19,14 @@ INSERT INTO clients (client_id, client_name, client_currency_code, client_net_te
 
 INSERT INTO users (user_id, user_name, user_email, user_password) VALUES
 (901, 'CI Tech', 'ci-tech@example.test', 'not-a-real-hash');
+
+INSERT INTO contacts (contact_id, contact_name, contact_client_id) VALUES
+(801, 'CI Contact A', 101),
+(802, 'CI Contact B', 102);
+
+INSERT INTO assets (asset_id, asset_type, asset_name, asset_make, asset_client_id) VALUES
+(701, 'Laptop', 'CI-LT-001', 'CI Make', 101),
+(702, 'Server', 'CI-SV-001', 'CI Make', 102);
 
 INSERT INTO tickets
 (ticket_id, ticket_number, ticket_subject, ticket_details, ticket_priority, ticket_status,

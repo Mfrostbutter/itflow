@@ -64,6 +64,12 @@ async function runProbe(probe) {
         check(`data.${k} is ${t}`, actual === t, actual, failures);
       }
     }
+    if (e.data_contains) {
+      for (const [k, v] of Object.entries(e.data_contains)) {
+        const arr = json.data?.[k];
+        check(`data.${k} contains ${JSON.stringify(v)}`, Array.isArray(arr) && arr.includes(v), arr, failures);
+      }
+    }
     if (e.data_length !== undefined) {
       check(`data length ${e.data_length}`, Array.isArray(json.data) && json.data.length === e.data_length,
         Array.isArray(json.data) ? json.data.length : json.data, failures);

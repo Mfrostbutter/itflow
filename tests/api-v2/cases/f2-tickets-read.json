@@ -112,6 +112,6 @@
     "method": "GET",
     "path": "/api/v2/capabilities.php",
     "headers": { "Authorization": "Bearer ${ALL_KEY}" },
-    "expect": { "status": 200, "success": true, "data_includes": { "features": ["tickets.read.filtered"] } }
+    "expect": { "status": 200, "success": true, "data_contains": { "features": "tickets.read.filtered" } }
   }
 ]

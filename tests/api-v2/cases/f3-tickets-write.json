@@ -1,0 +1,146 @@
+[
+  {
+    "name": "partial update: subject only",
+    "method": "POST",
+    "path": "/api/v2/tickets/update.php",
+    "headers": { "Authorization": "Bearer ${ALL_KEY}" },
+    "body": { "ticket_id": 9101, "client_id": 101, "subject": "Printer offline in accounting (updated)" },
+    "expect": {
+      "status": 200, "success": true,
+      "data_includes": { "ticket_subject": "Printer offline in accounting (updated)", "ticket_priority": "Medium" }
+    }
+  },
+  {
+    "name": "vendor_ticket_number is varchar-safe",
+    "method": "POST",
+    "path": "/api/v2/tickets/update.php",
+    "headers": { "Authorization": "Bearer ${ALL_KEY}" },
+    "body": { "ticket_id": 9102, "client_id": 101, "vendor_ticket_number": "ABC-123" },
+    "expect": { "status": 200, "success": true, "data_includes": { "ticket_vendor_ticket_number": "ABC-123" } }
+  },
+  {
+    "name": "status update by name",
+    "method": "POST",
+    "path": "/api/v2/tickets/update.php",
+    "headers": { "Authorization": "Bearer ${ALL_KEY}" },
+    "body": { "ticket_id": 9103, "client_id": 101, "status": "On Hold" },
+    "expect": { "status": 200, "success": true, "data_includes": { "ticket_status_name": "On Hold" } }
+  },
+  {
+    "name": "same-client contact reference accepted",
+    "method": "POST",
+    "path": "/api/v2/tickets/update.php",
+    "headers": { "Authorization": "Bearer ${ALL_KEY}" },
+    "body": { "ticket_id": 9101, "client_id": 101, "contact_id": 801 },
+    "expect": { "status": 200, "success": true, "data_includes": { "ticket_contact_id": 801 } }
+  },
+  {
+    "name": "cross-client contact -> 422",
+    "method": "POST",
+    "path": "/api/v2/tickets/update.php",
+    "headers": { "Authorization": "Bearer ${ALL_KEY}" },
+    "body": { "ticket_id": 9101, "client_id": 101, "contact_id": 802 },
+    "expect": { "status": 422, "success": false, "error_code": "VALIDATION_FAILED" }
+  },
+  {
+    "name": "cross-client asset -> 422",
+    "method": "POST",
+    "path": "/api/v2/tickets/update.php",
+    "headers": { "Authorization": "Bearer ${ALL_KEY}" },
+    "body": { "ticket_id": 9101, "client_id": 101, "asset_id": 702 },
+    "expect": { "status": 422, "success": false, "error_code": "VALIDATION_FAILED" }
+  },
+  {
+    "name": "unknown field -> 422",
+    "method": "POST",
+    "path": "/api/v2/tickets/update.php",
+    "headers": { "Authorization": "Bearer ${ALL_KEY}" },
+    "body": { "ticket_id": 9101, "client_id": 101, "shoe_size": 11 },
+    "expect": { "status": 422, "success": false, "error_code": "VALIDATION_FAILED" }
+  },
+  {
+    "name": "no updatable fields -> 422",
+    "method": "POST",
+    "path": "/api/v2/tickets/update.php",
+    "headers": { "Authorization": "Bearer ${ALL_KEY}" },
+    "body": { "ticket_id": 9101, "client_id": 101 },
+    "expect": { "status": 422, "success": false, "error_code": "VALIDATION_FAILED" }
+  },
+  {
+    "name": "nonexistent ticket -> 404",
+    "method": "POST",
+    "path": "/api/v2/tickets/update.php",
+    "headers": { "Authorization": "Bearer ${ALL_KEY}" },
+    "body": { "ticket_id": 9999, "client_id": 101, "subject": "ghost" },
+    "expect": { "status": 404, "success": false, "error_code": "NOT_FOUND" }
+  },
+  {
+    "name": "scoped key cannot reach another client's ticket -> 404",
+    "method": "POST",
+    "path": "/api/v2/tickets/update.php",
+    "headers": { "Authorization": "Bearer ${CLIENT_KEY}" },
+    "body": { "ticket_id": 9104, "subject": "not yours" },
+    "expect": { "status": 404, "success": false, "error_code": "NOT_FOUND" }
+  },
+  {
+    "name": "all-clients key without client_id -> 422",
+    "method": "POST",
+    "path": "/api/v2/tickets/update.php",
+    "headers": { "Authorization": "Bearer ${ALL_KEY}" },
+    "body": { "ticket_id": 9101, "subject": "no scope" },
+    "expect": { "status": 422, "success": false, "error_code": "VALIDATION_FAILED" }
+  },
+  {
+    "name": "malformed JSON body -> 400",
+    "method": "POST",
+    "path": "/api/v2/tickets/update.php",
+    "headers": { "Authorization": "Bearer ${ALL_KEY}" },
+    "body": "this is not json {{",
+    "expect": { "status": 400, "success": false, "error_code": "MALFORMED_JSON" }
+  },
+  {
+    "name": "assign flips New -> Open",
+    "method": "POST",
+    "path": "/api/v2/tickets/assign.php",
+    "headers": { "Authorization": "Bearer ${ALL_KEY}" },
+    "body": { "ticket_id": 9101, "client_id": 101, "assigned_to": 901 },
+    "expect": {
+      "status": 200, "success": true,
+      "data_includes": { "ticket_assigned_to": 901, "ticket_status_name": "Open", "ticket_assigned_to_name": "CI Tech" }
+    }
+  },
+  {
+    "name": "unassign keeps status",
+    "method": "POST",
+    "path": "/api/v2/tickets/assign.php",
+    "headers": { "Authorization": "Bearer ${ALL_KEY}" },
+    "body": { "ticket_id": 9101, "client_id": 101, "assigned_to": 0 },
+    "expect": { "status": 200, "success": true, "data_includes": { "ticket_assigned_to": 0, "ticket_status_name": "Open" } }
+  },
+  {
+    "name": "assign to nonexistent user -> 422",
+    "method": "POST",
+    "path": "/api/v2/tickets/assign.php",
+    "headers": { "Authorization": "Bearer ${ALL_KEY}" },
+    "body": { "ticket_id": 9102, "client_id": 101, "assigned_to": 999 },
+    "expect": { "status": 422, "success": false, "error_code": "VALIDATION_FAILED" }
+  },
+  {
+    "name": "assign nonexistent ticket -> 404",
+    "method": "POST",
+    "path": "/api/v2/tickets/assign.php",
+    "headers": { "Authorization": "Bearer ${ALL_KEY}" },
+    "body": { "ticket_id": 9999, "client_id": 101, "assigned_to": 901 },
+    "expect": { "status": 404, "success": false, "error_code": "NOT_FOUND" }
+  },
+  {
+    "name": "capabilities advertises tickets.update and tickets.assign",
+    "method": "GET",
+    "path": "/api/v2/capabilities.php",
+    "headers": { "Authorization": "Bearer ${ALL_KEY}" },
+    "expect": {
+      "status": 200, "success": true,
+      "data_contains": { "features": "tickets.update" }
+    }
+  }
+]

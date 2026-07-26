@@ -8,6 +8,7 @@
 
 $REQUIRE_METHOD = 'GET';
 require_once __DIR__ . '/../_lib/bootstrap.php';
+require_once __DIR__ . '/../_lib/tickets.php';
 
 $where = [];
 $params = [];
@@ -29,16 +30,8 @@ if ($ticket_id !== null) {
 // Status filters by NAME, resolved against ticket_statuses (case-insensitive)
 $status = v2_p_str($_GET, 'status');
 if ($status !== null) {
-    $stmt = mysqli_prepare($mysqli, 'SELECT ticket_status_id FROM ticket_statuses WHERE ticket_status_name = ? LIMIT 1');
-    mysqli_stmt_bind_param($stmt, 's', $status);
-    mysqli_stmt_execute($stmt);
-    $status_row = mysqli_fetch_assoc(mysqli_stmt_get_result($stmt));
-    mysqli_stmt_close($stmt);
-    if (!$status_row) {
-        api_fail(422, 'VALIDATION_FAILED', "Unknown ticket status: $status.", 'status');
-    }
     $where[] = 'ticket_status = ?';
-    $params[] = (int) $status_row['ticket_status_id'];
+    $params[] = v2_ticket_status_id($mysqli, $status);
     $types .= 'i';
 }
 
