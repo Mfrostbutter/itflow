@@ -64,6 +64,20 @@ async function runProbe(probe) {
         check(`data.${k} is ${t}`, actual === t, actual, failures);
       }
     }
+    if (e.data_length !== undefined) {
+      check(`data length ${e.data_length}`, Array.isArray(json.data) && json.data.length === e.data_length,
+        Array.isArray(json.data) ? json.data.length : json.data, failures);
+    }
+    if (e.meta_includes) {
+      for (const [k, v] of Object.entries(e.meta_includes)) {
+        check(`meta.${k} === ${JSON.stringify(v)}`, JSON.stringify(json.meta?.[k]) === JSON.stringify(v), json.meta?.[k], failures);
+      }
+    }
+    if (e.first_includes) {
+      for (const [k, v] of Object.entries(e.first_includes)) {
+        check(`data[0].${k} === ${JSON.stringify(v)}`, JSON.stringify(json.data?.[0]?.[k]) === JSON.stringify(v), json.data?.[0]?.[k], failures);
+      }
+    }
     // v1 canary: raw top-level equality (stringly success and friends must stay stringly)
     if (e.raw) {
       for (const [k, v] of Object.entries(e.raw)) {

@@ -1,0 +1,117 @@
+[
+  {
+    "name": "all tickets, all-clients key",
+    "method": "GET",
+    "path": "/api/v2/tickets/read.php",
+    "headers": { "Authorization": "Bearer ${ALL_KEY}" },
+    "expect": { "status": 200, "success": true, "data_length": 5, "meta_includes": { "total": 5, "count": 5 } }
+  },
+  {
+    "name": "scoped key sees only its client",
+    "method": "GET",
+    "path": "/api/v2/tickets/read.php",
+    "headers": { "Authorization": "Bearer ${CLIENT_KEY}" },
+    "expect": { "status": 200, "success": true, "meta_includes": { "total": 3 } }
+  },
+  {
+    "name": "all-clients key narrowed to client 102",
+    "method": "GET",
+    "path": "/api/v2/tickets/read.php?client_id=102",
+    "headers": { "Authorization": "Bearer ${ALL_KEY}" },
+    "expect": { "status": 200, "success": true, "meta_includes": { "total": 2 } }
+  },
+  {
+    "name": "scoped key crossing clients -> 403 SCOPE_DENIED",
+    "method": "GET",
+    "path": "/api/v2/tickets/read.php?client_id=102",
+    "headers": { "Authorization": "Bearer ${CLIENT_KEY}" },
+    "expect": { "status": 403, "success": false, "error_code": "SCOPE_DENIED" }
+  },
+  {
+    "name": "status filter by name",
+    "method": "GET",
+    "path": "/api/v2/tickets/read.php?status=Open",
+    "headers": { "Authorization": "Bearer ${ALL_KEY}" },
+    "expect": { "status": 200, "success": true, "meta_includes": { "total": 2 } }
+  },
+  {
+    "name": "status filter is case-insensitive",
+    "method": "GET",
+    "path": "/api/v2/tickets/read.php?status=open",
+    "headers": { "Authorization": "Bearer ${ALL_KEY}" },
+    "expect": { "status": 200, "success": true, "meta_includes": { "total": 2 } }
+  },
+  {
+    "name": "unknown status -> 422",
+    "method": "GET",
+    "path": "/api/v2/tickets/read.php?status=Bogus",
+    "headers": { "Authorization": "Bearer ${ALL_KEY}" },
+    "expect": { "status": 422, "success": false, "error_code": "VALIDATION_FAILED" }
+  },
+  {
+    "name": "q searches subject and details",
+    "method": "GET",
+    "path": "/api/v2/tickets/read.php?q=FortiGate",
+    "headers": { "Authorization": "Bearer ${ALL_KEY}" },
+    "expect": {
+      "status": 200, "success": true, "data_length": 1,
+      "first_includes": { "ticket_id": 9102, "ticket_status_name": "Open", "ticket_assigned_to_name": "CI Tech" }
+    }
+  },
+  {
+    "name": "created_after/before window",
+    "method": "GET",
+    "path": "/api/v2/tickets/read.php?created_after=2026-03-01&created_before=2026-03-31",
+    "headers": { "Authorization": "Bearer ${ALL_KEY}" },
+    "expect": { "status": 200, "success": true, "meta_includes": { "total": 2 } }
+  },
+  {
+    "name": "assigned_to filter",
+    "method": "GET",
+    "path": "/api/v2/tickets/read.php?assigned_to=901",
+    "headers": { "Authorization": "Bearer ${ALL_KEY}" },
+    "expect": { "status": 200, "success": true, "meta_includes": { "total": 2 } }
+  },
+  {
+    "name": "pagination with asc sort",
+    "method": "GET",
+    "path": "/api/v2/tickets/read.php?sort=created_at&order=asc&per_page=2&page=2",
+    "headers": { "Authorization": "Bearer ${ALL_KEY}" },
+    "expect": {
+      "status": 200, "success": true, "data_length": 2,
+      "meta_includes": { "page": 2, "per_page": 2, "total": 5 },
+      "first_includes": { "ticket_id": 9103 }
+    }
+  },
+  {
+    "name": "priority sort ranks High first on desc",
+    "method": "GET",
+    "path": "/api/v2/tickets/read.php?sort=priority&order=desc",
+    "headers": { "Authorization": "Bearer ${ALL_KEY}" },
+    "expect": { "status": 200, "success": true, "first_includes": { "ticket_priority": "High" } }
+  },
+  {
+    "name": "per_page over cap -> 422",
+    "method": "GET",
+    "path": "/api/v2/tickets/read.php?per_page=500",
+    "headers": { "Authorization": "Bearer ${ALL_KEY}" },
+    "expect": { "status": 422, "success": false, "error_code": "VALIDATION_FAILED" }
+  },
+  {
+    "name": "single ticket by ticket_id",
+    "method": "GET",
+    "path": "/api/v2/tickets/read.php?ticket_id=9105",
+    "headers": { "Authorization": "Bearer ${ALL_KEY}" },
+    "expect": {
+      "status": 200, "success": true, "data_length": 1,
+      "first_includes": { "ticket_subject": "New laptop setup", "ticket_status_name": "New" }
+    }
+  },
+  {
+    "name": "capabilities now advertises tickets.read.filtered",
+    "method": "GET",
+    "path": "/api/v2/capabilities.php",
+    "headers": { "Authorization": "Bearer ${ALL_KEY}" },
+    "expect": { "status": 200, "success": true, "data_includes": { "features": ["tickets.read.filtered"] } }
+  }
+]

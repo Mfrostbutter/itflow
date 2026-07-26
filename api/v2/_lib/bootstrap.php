@@ -15,7 +15,7 @@ header('Content-Type: application/json');
 // Fork identity - bump fork_api on additive releases, upstream_base on rebases
 define('FORK_API_VERSION', '2.0.0');
 define('FORK_UPSTREAM_BASE', '26.07.1 (master@698135d)');
-define('FORK_FEATURES', []);
+define('FORK_FEATURES', ['tickets.read.filtered']);
 define('FORK_V1_EXTENSIONS', ['tickets/update', 'tickets/reply']);
 
 // Any uncaught error (incl. mysqli exceptions) -> clean 500, details to error_log only
