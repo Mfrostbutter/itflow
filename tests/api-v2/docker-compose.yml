@@ -1,0 +1,25 @@
+# api/v2 probe stack: MariaDB + Apache/PHP with the repo mounted as docroot.
+# Test-only credentials, never used outside this compose network.
+services:
+  db:
+    image: mariadb:10.11
+    environment:
+      MARIADB_ROOT_PASSWORD: ci-root-pw
+      MARIADB_DATABASE: itflow
+      MARIADB_USER: itflow
+      MARIADB_PASSWORD: itflowpass
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 2s
+      timeout: 5s
+      retries: 30
+
+  app:
+    build: .
+    volumes:
+      - ../..:/var/www/html
+    ports:
+      - "8087:80"
+    depends_on:
+      db:
+        condition: service_healthy

@@ -1,0 +1,61 @@
+[
+  {
+    "name": "capabilities via Bearer (all-clients key)",
+    "method": "GET",
+    "path": "/api/v2/capabilities.php",
+    "headers": { "Authorization": "Bearer ${ALL_KEY}" },
+    "expect": {
+      "status": 200,
+      "success": true,
+      "data_includes": { "fork": true, "fork_api": "2.0.0" },
+      "data_types": { "features": "array", "v1_extensions": "array", "upstream_base": "string" }
+    }
+  },
+  {
+    "name": "capabilities via api_key param (back-compat)",
+    "method": "GET",
+    "path": "/api/v2/capabilities.php?api_key=${ALL_KEY}",
+    "expect": { "status": 200, "success": true, "data_includes": { "fork": true } }
+  },
+  {
+    "name": "capabilities with client-scoped key",
+    "method": "GET",
+    "path": "/api/v2/capabilities.php",
+    "headers": { "Authorization": "Bearer ${CLIENT_KEY}" },
+    "expect": { "status": 200, "success": true, "data_includes": { "fork_api": "2.0.0" } }
+  },
+  {
+    "name": "no key -> 401 AUTH_INVALID",
+    "method": "GET",
+    "path": "/api/v2/capabilities.php",
+    "expect": { "status": 401, "success": false, "error_code": "AUTH_INVALID" }
+  },
+  {
+    "name": "unknown key -> 401 AUTH_INVALID",
+    "method": "GET",
+    "path": "/api/v2/capabilities.php",
+    "headers": { "Authorization": "Bearer ${BAD_KEY}" },
+    "expect": { "status": 401, "success": false, "error_code": "AUTH_INVALID" }
+  },
+  {
+    "name": "expired key -> 401 AUTH_EXPIRED",
+    "method": "GET",
+    "path": "/api/v2/capabilities.php",
+    "headers": { "Authorization": "Bearer ${EXPIRED_KEY}" },
+    "expect": { "status": 401, "success": false, "error_code": "AUTH_EXPIRED" }
+  },
+  {
+    "name": "POST to a GET endpoint -> 405 envelope",
+    "method": "POST",
+    "path": "/api/v2/capabilities.php",
+    "headers": { "Authorization": "Bearer ${ALL_KEY}" },
+    "body": {},
+    "expect": { "status": 405, "success": false, "error_code": "METHOD_NOT_ALLOWED" }
+  },
+  {
+    "name": "v1 canary: clients/read contract unchanged (stringly True)",
+    "method": "GET",
+    "path": "/api/v1/clients/read.php?api_key=${ALL_KEY}",
+    "expect": { "status": 200, "raw": { "success": "True" } }
+  }
+]

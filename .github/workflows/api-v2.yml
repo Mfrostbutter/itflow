@@ -1,0 +1,46 @@
+# api/v2 contract probes: lint, stand up ITFlow in compose, run the probe suite.
+name: api-v2
+
+on:
+  push:
+    branches: ["fork/main", "feat/**"]
+    paths:
+      - "api/**"
+      - "tests/api-v2/**"
+      - ".github/workflows/api-v2.yml"
+  workflow_dispatch:
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Lint api/v2
+        run: |
+          docker run --rm -v "$PWD":/app -w /app php:8.3-cli \
+            bash -c 'set -e; find api/v2 -name "*.php" -print0 | xargs -0 -n1 php -l'
+
+      - name: Start stack
+        run: docker compose -f tests/api-v2/docker-compose.yml up -d --build --wait
+
+      - name: Install ITFlow
+        run: |
+          docker compose -f tests/api-v2/docker-compose.yml exec -T app \
+            php scripts/setup_cli.php --host=db --username=itflow --password=itflowpass \
+            --database=itflow --base-url=localhost:8087 --locale=en_US --timezone=UTC \
+            --currency=USD --company-name="CI Test Co" --country="United States" \
+            --user-name="CI Admin" --user-email="ci@example.test" \
+            --user-password="ci-admin-pass-123" --non-interactive
+
+      - name: Load fixture
+        run: |
+          docker compose -f tests/api-v2/docker-compose.yml exec -T db \
+            mariadb -uitflow -pitflowpass itflow < tests/api-v2/fixture.sql
+
+      - name: Run probes
+        run: node tests/api-v2/run_probes.mjs http://localhost:8087
+
+      - name: Stack logs on failure
+        if: failure()
+        run: docker compose -f tests/api-v2/docker-compose.yml logs --tail 100
