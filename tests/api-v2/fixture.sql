@@ -2,6 +2,8 @@
 -- valid only inside the probe stack. Idempotent: deletes its own rows first.
 
 DELETE FROM api_keys WHERE api_key_name LIKE 'ci-%';
+DELETE FROM ticket_replies WHERE ticket_reply_ticket_id BETWEEN 9101 AND 9199;
+DELETE FROM notifications WHERE notification_client_id IN (101, 102);
 DELETE FROM tickets WHERE ticket_id BETWEEN 9101 AND 9199;
 DELETE FROM users WHERE user_id = 901;
 DELETE FROM contacts WHERE contact_id IN (801, 802);

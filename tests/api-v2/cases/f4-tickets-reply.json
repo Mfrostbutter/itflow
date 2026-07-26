@@ -1,0 +1,85 @@
+[
+  {
+    "name": "internal reply created (201)",
+    "method": "POST",
+    "path": "/api/v2/tickets/reply.php",
+    "headers": { "Authorization": "Bearer ${ALL_KEY}" },
+    "body": { "ticket_id": 9102, "client_id": 101, "reply": "Checked tunnel logs, renegotiation every 24h." },
+    "expect": {
+      "status": 201, "success": true,
+      "data_includes": { "ticket_reply_type": "Internal", "ticket_reply_ticket_id": 9102 }
+    }
+  },
+  {
+    "name": "internal reply does NOT stamp first response",
+    "method": "GET",
+    "path": "/api/v2/tickets/read.php?ticket_id=9102",
+    "headers": { "Authorization": "Bearer ${ALL_KEY}" },
+    "expect": { "status": 200, "success": true, "first_includes": { "ticket_first_response_at": null } }
+  },
+  {
+    "name": "public reply created (201)",
+    "method": "POST",
+    "path": "/api/v2/tickets/reply.php",
+    "headers": { "Authorization": "Bearer ${ALL_KEY}" },
+    "body": { "ticket_id": 9102, "client_id": 101, "reply": "We identified the cause and are applying a fix.", "type": "public" },
+    "expect": { "status": 201, "success": true, "data_includes": { "ticket_reply_type": "Public" } }
+  },
+  {
+    "name": "first public reply stamps first response",
+    "method": "GET",
+    "path": "/api/v2/tickets/read.php?ticket_id=9102",
+    "headers": { "Authorization": "Bearer ${ALL_KEY}" },
+    "expect": { "status": 200, "success": true, "first_nonnull": ["ticket_first_response_at"] }
+  },
+  {
+    "name": "attributed reply with time worked",
+    "method": "POST",
+    "path": "/api/v2/tickets/reply.php",
+    "headers": { "Authorization": "Bearer ${ALL_KEY}" },
+    "body": { "ticket_id": 9102, "client_id": 101, "reply": "Applied firmware update.", "reply_by": 901, "time_worked": "00:15:00" },
+    "expect": {
+      "status": 201, "success": true,
+      "data_includes": { "ticket_reply_by_name": "CI Tech", "ticket_reply_time_worked": "00:15:00" }
+    }
+  },
+  {
+    "name": "missing reply text -> 422",
+    "method": "POST",
+    "path": "/api/v2/tickets/reply.php",
+    "headers": { "Authorization": "Bearer ${ALL_KEY}" },
+    "body": { "ticket_id": 9102, "client_id": 101 },
+    "expect": { "status": 422, "success": false, "error_code": "VALIDATION_FAILED" }
+  },
+  {
+    "name": "bad time_worked -> 422",
+    "method": "POST",
+    "path": "/api/v2/tickets/reply.php",
+    "headers": { "Authorization": "Bearer ${ALL_KEY}" },
+    "body": { "ticket_id": 9102, "client_id": 101, "reply": "x", "time_worked": "15 minutes" },
+    "expect": { "status": 422, "success": false, "error_code": "VALIDATION_FAILED" }
+  },
+  {
+    "name": "reply_by nonexistent user -> 422",
+    "method": "POST",
+    "path": "/api/v2/tickets/reply.php",
+    "headers": { "Authorization": "Bearer ${ALL_KEY}" },
+    "body": { "ticket_id": 9102, "client_id": 101, "reply": "x", "reply_by": 999 },
+    "expect": { "status": 422, "success": false, "error_code": "VALIDATION_FAILED" }
+  },
+  {
+    "name": "scoped key cannot reply to another client's ticket -> 404",
+    "method": "POST",
+    "path": "/api/v2/tickets/reply.php",
+    "headers": { "Authorization": "Bearer ${CLIENT_KEY}" },
+    "body": { "ticket_id": 9104, "reply": "not yours" },
+    "expect": { "status": 404, "success": false, "error_code": "NOT_FOUND" }
+  },
+  {
+    "name": "capabilities advertises tickets.reply",
+    "method": "GET",
+    "path": "/api/v2/capabilities.php",
+    "headers": { "Authorization": "Bearer ${ALL_KEY}" },
+    "expect": { "status": 200, "success": true, "data_contains": { "features": "tickets.reply" } }
+  }
+]

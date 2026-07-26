@@ -84,6 +84,12 @@ async function runProbe(probe) {
         check(`data[0].${k} === ${JSON.stringify(v)}`, JSON.stringify(json.data?.[0]?.[k]) === JSON.stringify(v), json.data?.[0]?.[k], failures);
       }
     }
+    if (e.first_nonnull) {
+      for (const k of e.first_nonnull) {
+        const val = json.data?.[0]?.[k];
+        check(`data[0].${k} is non-null`, val !== null && val !== undefined && val !== "", val, failures);
+      }
+    }
     // v1 canary: raw top-level equality (stringly success and friends must stay stringly)
     if (e.raw) {
       for (const [k, v] of Object.entries(e.raw)) {
