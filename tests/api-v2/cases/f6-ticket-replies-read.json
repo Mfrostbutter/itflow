@@ -1,0 +1,48 @@
+[
+  {
+    "name": "thread read in order (replies created in F4)",
+    "method": "GET",
+    "path": "/api/v2/ticket_replies/read.php?ticket_id=9102",
+    "headers": { "Authorization": "Bearer ${ALL_KEY}" },
+    "expect": {
+      "status": 200, "success": true, "meta_includes": { "total": 3 },
+      "first_includes": { "ticket_reply_type": "Internal" }
+    }
+  },
+  {
+    "name": "type filter: public only",
+    "method": "GET",
+    "path": "/api/v2/ticket_replies/read.php?ticket_id=9102&type=public",
+    "headers": { "Authorization": "Bearer ${ALL_KEY}" },
+    "expect": { "status": 200, "success": true, "meta_includes": { "total": 1 } }
+  },
+  {
+    "name": "seed a reply on the other client's ticket",
+    "method": "POST",
+    "path": "/api/v2/tickets/reply.php",
+    "headers": { "Authorization": "Bearer ${ALL_KEY}" },
+    "body": { "ticket_id": 9104, "client_id": 102, "reply": "Backup reconfigured." },
+    "expect": { "status": 201, "success": true }
+  },
+  {
+    "name": "all-clients key sees the other client's thread",
+    "method": "GET",
+    "path": "/api/v2/ticket_replies/read.php?ticket_id=9104",
+    "headers": { "Authorization": "Bearer ${ALL_KEY}" },
+    "expect": { "status": 200, "success": true, "meta_includes": { "total": 1 } }
+  },
+  {
+    "name": "scoped key cannot see the other client's thread",
+    "method": "GET",
+    "path": "/api/v2/ticket_replies/read.php?ticket_id=9104",
+    "headers": { "Authorization": "Bearer ${CLIENT_KEY}" },
+    "expect": { "status": 200, "success": true, "meta_includes": { "total": 0 }, "data_length": 0 }
+  },
+  {
+    "name": "capabilities advertises ticket_replies.read",
+    "method": "GET",
+    "path": "/api/v2/capabilities.php",
+    "headers": { "Authorization": "Bearer ${ALL_KEY}" },
+    "expect": { "status": 200, "success": true, "data_contains": { "features": "ticket_replies.read" } }
+  }
+]

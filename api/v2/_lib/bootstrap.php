@@ -15,7 +15,7 @@ header('Content-Type: application/json');
 // Fork identity - bump fork_api on additive releases, upstream_base on rebases
 define('FORK_API_VERSION', '2.0.0');
 define('FORK_UPSTREAM_BASE', '26.07.1 (master@698135d)');
-define('FORK_FEATURES', ['tickets.read.filtered', 'tickets.update', 'tickets.assign', 'tickets.reply']);
+define('FORK_FEATURES', ['tickets.read.filtered', 'tickets.update', 'tickets.assign', 'tickets.reply', 'ticket_replies.read']);
 define('FORK_V1_EXTENSIONS', ['tickets/update', 'tickets/reply']);
 
 // Extension-schema detection: some features exist only when their (non-stock)
