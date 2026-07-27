@@ -1,0 +1,116 @@
+[
+  {
+    "name": "agreements: all rows, all-clients key",
+    "method": "GET",
+    "path": "/api/v2/agreements/read.php",
+    "headers": { "Authorization": "Bearer ${ALL_KEY}" },
+    "expect": { "status": 200, "success": true, "meta_includes": { "total": 3 } }
+  },
+  {
+    "name": "agreements: active only",
+    "method": "GET",
+    "path": "/api/v2/agreements/read.php?active=true",
+    "headers": { "Authorization": "Bearer ${ALL_KEY}" },
+    "expect": { "status": 200, "success": true, "meta_includes": { "total": 2 } }
+  },
+  {
+    "name": "agreements: active and expiring before a date",
+    "method": "GET",
+    "path": "/api/v2/agreements/read.php?active=true&expiring_before=2026-09-01",
+    "headers": { "Authorization": "Bearer ${ALL_KEY}" },
+    "expect": {
+      "status": 200, "success": true, "data_length": 1,
+      "first_includes": { "agreement_name": "CI Backup Plan", "agreement_client_name": "CI Second Client" }
+    }
+  },
+  {
+    "name": "agreements: scoped key sees only its client",
+    "method": "GET",
+    "path": "/api/v2/agreements/read.php",
+    "headers": { "Authorization": "Bearer ${CLIENT_KEY}" },
+    "expect": { "status": 200, "success": true, "meta_includes": { "total": 2 } }
+  },
+  {
+    "name": "time entries: all rows",
+    "method": "GET",
+    "path": "/api/v2/time_entries/read.php",
+    "headers": { "Authorization": "Bearer ${ALL_KEY}" },
+    "expect": { "status": 200, "success": true, "meta_includes": { "total": 3 } }
+  },
+  {
+    "name": "time entries: by ticket with tech name",
+    "method": "GET",
+    "path": "/api/v2/time_entries/read.php?ticket_id=9102",
+    "headers": { "Authorization": "Bearer ${ALL_KEY}" },
+    "expect": {
+      "status": 200, "success": true, "data_length": 1,
+      "first_includes": { "entry_tech_name": "CI Tech", "entry_hours": "2.50" }
+    }
+  },
+  {
+    "name": "time entries: date window",
+    "method": "GET",
+    "path": "/api/v2/time_entries/read.php?date_from=2026-03-01",
+    "headers": { "Authorization": "Bearer ${ALL_KEY}" },
+    "expect": { "status": 200, "success": true, "meta_includes": { "total": 1 } }
+  },
+  {
+    "name": "time entries: billable filter",
+    "method": "GET",
+    "path": "/api/v2/time_entries/read.php?billable=false",
+    "headers": { "Authorization": "Bearer ${ALL_KEY}" },
+    "expect": { "status": 200, "success": true, "meta_includes": { "total": 1 } }
+  },
+  {
+    "name": "time entry create (201) with ticket + tech",
+    "method": "POST",
+    "path": "/api/v2/time_entries/create.php",
+    "headers": { "Authorization": "Bearer ${ALL_KEY}" },
+    "body": { "client_id": 101, "ticket_id": 9102, "tech_id": 901, "hours": 1.75, "rate": 125, "note": "Firmware update work" },
+    "expect": {
+      "status": 201, "success": true,
+      "data_includes": { "entry_hours": "1.75", "entry_tech_name": "CI Tech", "entry_billable": 1 }
+    }
+  },
+  {
+    "name": "time entry create: zero hours -> 422",
+    "method": "POST",
+    "path": "/api/v2/time_entries/create.php",
+    "headers": { "Authorization": "Bearer ${ALL_KEY}" },
+    "body": { "client_id": 101, "tech_id": 901, "hours": 0 },
+    "expect": { "status": 422, "success": false, "error_code": "VALIDATION_FAILED" }
+  },
+  {
+    "name": "time entry create: nonexistent tech -> 422",
+    "method": "POST",
+    "path": "/api/v2/time_entries/create.php",
+    "headers": { "Authorization": "Bearer ${ALL_KEY}" },
+    "body": { "client_id": 101, "tech_id": 999, "hours": 1 },
+    "expect": { "status": 422, "success": false, "error_code": "VALIDATION_FAILED" }
+  },
+  {
+    "name": "time entry create: cross-client ticket -> 422",
+    "method": "POST",
+    "path": "/api/v2/time_entries/create.php",
+    "headers": { "Authorization": "Bearer ${ALL_KEY}" },
+    "body": { "client_id": 101, "ticket_id": 9104, "tech_id": 901, "hours": 1 },
+    "expect": { "status": 422, "success": false, "error_code": "VALIDATION_FAILED" }
+  },
+  {
+    "name": "capabilities advertises the extension features",
+    "method": "GET",
+    "path": "/api/v2/capabilities.php",
+    "headers": { "Authorization": "Bearer ${ALL_KEY}" },
+    "expect": {
+      "status": 200, "success": true,
+      "data_contains": { "features": "agreements.read" }
+    }
+  },
+  {
+    "name": "capabilities advertises time_entries.create",
+    "method": "GET",
+    "path": "/api/v2/capabilities.php",
+    "headers": { "Authorization": "Bearer ${ALL_KEY}" },
+    "expect": { "status": 200, "success": true, "data_contains": { "features": "time_entries.create" } }
+  }
+]

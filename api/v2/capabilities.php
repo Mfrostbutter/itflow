@@ -11,6 +11,6 @@ api_ok([
     'fork'          => true,
     'fork_api'      => FORK_API_VERSION,
     'upstream_base' => FORK_UPSTREAM_BASE,
-    'features'      => FORK_FEATURES,
+    'features'      => v2_features($mysqli),
     'v1_extensions' => FORK_V1_EXTENSIONS,
 ]);

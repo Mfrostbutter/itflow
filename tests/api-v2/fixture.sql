@@ -1,7 +1,41 @@
--- CI fixture: API keys, clients, a tech, and tickets. Test-only values,
--- valid only inside the probe stack. Idempotent: deletes its own rows first.
+-- CI fixture: API keys, clients, a tech, tickets, and the extension schema
+-- (agreements + time_entries, matching the demo deployment exactly).
+-- Test-only values, valid only inside the probe stack. Idempotent.
+
+CREATE TABLE IF NOT EXISTS `agreements` (
+  `agreement_id` int(11) NOT NULL AUTO_INCREMENT,
+  `agreement_client_id` int(11) NOT NULL,
+  `agreement_name` varchar(150) NOT NULL,
+  `agreement_type` varchar(60) NOT NULL,
+  `agreement_seats` int(11) NOT NULL DEFAULT 0,
+  `agreement_mrr` decimal(15,2) NOT NULL,
+  `agreement_start` date NOT NULL,
+  `agreement_end` date NOT NULL,
+  `agreement_status` varchar(20) NOT NULL DEFAULT 'Active',
+  `agreement_created_at` datetime NOT NULL,
+  PRIMARY KEY (`agreement_id`),
+  KEY `idx_ag_client` (`agreement_client_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+CREATE TABLE IF NOT EXISTS `time_entries` (
+  `entry_id` int(11) NOT NULL AUTO_INCREMENT,
+  `entry_client_id` int(11) NOT NULL,
+  `entry_ticket_id` int(11) DEFAULT NULL,
+  `entry_tech_id` int(11) NOT NULL,
+  `entry_hours` decimal(6,2) NOT NULL,
+  `entry_billable` tinyint(1) NOT NULL DEFAULT 1,
+  `entry_rate` decimal(10,2) NOT NULL,
+  `entry_date` date NOT NULL,
+  `entry_note` varchar(200) DEFAULT NULL,
+  `entry_created_at` datetime NOT NULL,
+  PRIMARY KEY (`entry_id`),
+  KEY `idx_te_client` (`entry_client_id`),
+  KEY `idx_te_ticket` (`entry_ticket_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 DELETE FROM api_keys WHERE api_key_name LIKE 'ci-%';
+DELETE FROM agreements WHERE agreement_id BETWEEN 9401 AND 9499;
+DELETE FROM time_entries WHERE entry_id BETWEEN 9501 AND 9599;
 DELETE FROM ticket_replies WHERE ticket_reply_ticket_id BETWEEN 9101 AND 9199;
 DELETE FROM notifications WHERE notification_client_id IN (101, 102);
 DELETE FROM tickets WHERE ticket_id BETWEEN 9101 AND 9199;
@@ -29,6 +63,20 @@ INSERT INTO contacts (contact_id, contact_name, contact_client_id) VALUES
 INSERT INTO assets (asset_id, asset_type, asset_name, asset_make, asset_client_id) VALUES
 (701, 'Laptop', 'CI-LT-001', 'CI Make', 101),
 (702, 'Server', 'CI-SV-001', 'CI Make', 102);
+
+INSERT INTO agreements
+(agreement_id, agreement_client_id, agreement_name, agreement_type, agreement_seats,
+ agreement_mrr, agreement_start, agreement_end, agreement_status, agreement_created_at) VALUES
+(9401, 101, 'CI Managed Services', 'Managed',  25, 1500.00, '2026-01-01', '2026-12-31', 'Active',  NOW()),
+(9402, 101, 'CI Legacy Support',   'Support',  10,  400.00, '2025-04-01', '2026-03-31', 'Expired', NOW()),
+(9403, 102, 'CI Backup Plan',      'Backup',    5,  250.00, '2025-09-01', '2026-08-15', 'Active',  NOW());
+
+INSERT INTO time_entries
+(entry_id, entry_client_id, entry_ticket_id, entry_tech_id, entry_hours,
+ entry_billable, entry_rate, entry_date, entry_note, entry_created_at) VALUES
+(9501, 101, 9102, 901, 2.50, 1, 150.00, '2026-02-16', 'Tunnel diagnostics', NOW()),
+(9502, 101, NULL, 901, 1.00, 0, 0.00,   '2026-01-20', 'Internal maintenance', NOW()),
+(9503, 102, 9104, 901, 3.00, 1, 150.00, '2026-03-21', 'Backup job repair', NOW());
 
 INSERT INTO tickets
 (ticket_id, ticket_number, ticket_subject, ticket_details, ticket_priority, ticket_status,

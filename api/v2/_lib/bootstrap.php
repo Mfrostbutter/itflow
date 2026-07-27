@@ -18,6 +18,43 @@ define('FORK_UPSTREAM_BASE', '26.07.1 (master@698135d)');
 define('FORK_FEATURES', ['tickets.read.filtered', 'tickets.update', 'tickets.assign', 'tickets.reply']);
 define('FORK_V1_EXTENSIONS', ['tickets/update', 'tickets/reply']);
 
+// Extension-schema detection: some features exist only when their (non-stock)
+// tables are present. Consumers key off capabilities, never off guesses.
+function v2_table_exists(mysqli $mysqli, string $table): bool
+{
+    $stmt = mysqli_prepare(
+        $mysqli,
+        'SELECT 1 FROM information_schema.tables WHERE table_schema = DATABASE() AND table_name = ? LIMIT 1'
+    );
+    mysqli_stmt_bind_param($stmt, 's', $table);
+    mysqli_stmt_execute($stmt);
+    $exists = (bool) mysqli_fetch_row(mysqli_stmt_get_result($stmt));
+    mysqli_stmt_close($stmt);
+    return $exists;
+}
+
+// Full feature list: static core + schema-conditional extensions
+function v2_features(mysqli $mysqli): array
+{
+    $features = FORK_FEATURES;
+    if (v2_table_exists($mysqli, 'agreements')) {
+        $features[] = 'agreements.read';
+    }
+    if (v2_table_exists($mysqli, 'time_entries')) {
+        $features[] = 'time_entries.read';
+        $features[] = 'time_entries.create';
+    }
+    return $features;
+}
+
+// Endpoint guard for extension-schema features
+function v2_require_table(mysqli $mysqli, string $table, string $feature): void
+{
+    if (!v2_table_exists($mysqli, $table)) {
+        api_fail(404, 'FEATURE_UNAVAILABLE', "$feature requires the $table extension schema, which this deployment does not have.");
+    }
+}
+
 // Any uncaught error (incl. mysqli exceptions) -> clean 500, details to error_log only
 set_exception_handler(function ($e) {
     error_log('API v2 error: ' . $e->getMessage());
