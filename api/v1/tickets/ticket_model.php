@@ -55,7 +55,7 @@ if (isset($_POST['ticket_vendor_id'])) {
 if (isset($_POST['ticket_vendor_ticket_id'])) {
     $vendor_ticket_number = intval($_POST['ticket_vendor_ticket_id']);
 } elseif ($ticket_row) {
-    $vendor_ticket_number = $ticket_row['ticket_vendor_ticket_id'];
+    $vendor_ticket_number = $ticket_row['ticket_vendor_ticket_number'];
 } else {
     $vendor_ticket_number = '0';
 }
