@@ -1,5 +1,8 @@
 <?php
 
+// Creation includes this without a loaded row; guard so PHP 8 does not warn
+$ticket_row = $ticket_row ?? false;
+
 // Variable assignment from POST (or: blank/from DB is updating)
 
 if (isset($_POST['ticket_contact_id'])) {
