@@ -2,6 +2,9 @@
 
 // Variable assignment from POST (or: blank/from DB is updating)
 
+// Creation includes this without a loaded row; guard so PHP 8 does not warn
+$client_row = $client_row ?? false;
+
 if (isset($_POST['client_name'])) {
     $name = sanitizeInput($_POST['client_name']);
 } elseif ($client_row) {
